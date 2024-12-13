@@ -1,5 +1,4 @@
 import discord
-import json  # noqa: F401
 from discord.ext import commands
 
 class RoleCommands(commands.Cog):

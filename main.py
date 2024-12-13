@@ -46,10 +46,10 @@ async def load_cogs():
     for filename in os.listdir(folder):
       if filename.endswith('.py') and filename != '__init__.py':
         try:
-          await bot.load_extension(f'{folder}.{filename[:-3]}')
-          print(f'Loaded {folder}.{filename[:-3]} successfully')
+          await bot.load_extension(f'{folder}.{filename}')
+          print(f'Loaded {folder}.{filename} successfully')
         except Exception as e:
-          print(f'Failed to load {folder}.{filename[:-3]}: {e}')
+          print(f'Failed to load {folder}.{filename}: {e}')
 
 @bot.event
 async def on_command_error(ctx, error):
