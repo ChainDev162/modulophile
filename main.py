@@ -60,14 +60,7 @@ async def on_ready():
   else:
     print("Connected to servers:")
   for guild in bot.guilds:
-    invite_link = "No invite available"
-    try:
-      invites = await guild.invites()
-      if invites:
-        invite_link = invites[0].url 
-    except Exception:
-      invite_link = "Unable to fetch invites (requires permissions)"
-    print(f'- {guild.name} (ID: {guild.id}, Invite: {invite_link})')
+    print(f'- {guild.name} (ID: {guild.id})')
     
 @bot.event
 async def on_command_error(ctx, error):
