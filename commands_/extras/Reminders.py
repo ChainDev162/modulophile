@@ -8,7 +8,7 @@ class ReminderCommands(commands.Cog):
   @commands.command(name="remind")
   @commands.cooldown(1, 3, commands.BucketType.user) 
   async def remind(self, ctx, time: int, *, message: str):
-    await ctx.send(f"ℹ Reminder set for {time} seconds.")
+    await ctx.send(f"Reminder set for {time} seconds.")
     await asyncio.sleep(time)
     await ctx.send(f":bangbang: Reminder: {message}")
 ################ FOR INIT ###############
