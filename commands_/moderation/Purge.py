@@ -1,4 +1,3 @@
-import discord  # noqa: F401
 from discord.ext import commands
 
 class PurgeCommands(commands.Cog):

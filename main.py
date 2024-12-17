@@ -4,6 +4,7 @@ import os
 import json
 import sys
 import dotenv
+import pathlib
 from discord.ext import commands
 
 intents = discord.Intents.default()
@@ -30,27 +31,44 @@ def save_warnings(warnings):
 
 warnings = load_warnings()
 
-@bot.event
-async def on_ready():
-	print(f'Logged in as {bot.user.name}')
-	if not bot.guilds:
-		print("Not on any servers.")
-	else:
-		print("Connected to servers:")
-	for guild in bot.guilds:
-		print(f'- {guild.name} (ID: {guild.id})')
-	await load_cogs()
 
 async def load_cogs():
-  for folder in ['moderation', 'extras']:
-    for filename in os.listdir(folder):
-      if filename.endswith('.py') and filename != '__init__.py':
-        try:
-          await bot.load_extension(f'{folder}.{filename}')
-          print(f'Loaded {folder}.{filename} successfully')
-        except Exception as e:
-          print(f'Failed to load {folder}.{filename}: {e}')
+  loaded_exts = []
+  ext_dir = "commands_"
+  all_files = [file for file in pathlib.Path(ext_dir).rglob("*.py") 
+               if not file.stem.startswith("_") and "utils" not in file.parts] # leave as is, or please fix
+  for file in all_files:
+    try:
+      await bot.load_extension(".".join(file.with_suffix("").parts))
+      print(f"✅ Loaded {file}")
+      loaded_exts.append(file.stem)
+    except commands.ExtensionError as e:
+      print(f"❌ Failed to load {file}: {e}")
+  loaded_commands = ", ".join(loaded_exts)
+  loaded_amt = len(loaded_exts) + len(all_files) # just for this next condition
+  if len(loaded_exts) == len(all_files) and loaded_amt != 0:
+    print("🔥 All extensions loaded!")
+    print(loaded_exts)
+  else:
+    print(f"Loaded commands: {loaded_commands}")
 
+@bot.event
+async def on_ready():
+  print(f'Logged in as {bot.user.name}')
+  if not bot.guilds:
+    print("Not on any servers.")
+  else:
+    print("Connected to servers:")
+  for guild in bot.guilds:
+    invite_link = "No invite available"
+    try:
+      invites = await guild.invites()
+      if invites:
+        invite_link = invites[0].url 
+    except Exception:
+      invite_link = "Unable to fetch invites (requires permissions)"
+    print(f'- {guild.name} (ID: {guild.id}, Invite: {invite_link})')
+    
 @bot.event
 async def on_command_error(ctx, error):
   if isinstance(error, commands.CommandNotFound):
@@ -71,8 +89,9 @@ async def reboot(ctx):
   await ctx.send("🔄 Rebooting bot...")
   os.execv(sys.executable, ['python'] + sys.argv)
 
-async def main():    
+async def main():  
+  await load_cogs()
   await bot.start(TOKEN)
 
 asyncio.run(main())
-# somebody make this entire bot use sqlite3 im too lazy to learn sql
+# somebody make this entire bot use sqlite3 instead of json im too lazy to learn sql

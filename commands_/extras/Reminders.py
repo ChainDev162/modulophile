@@ -1,4 +1,3 @@
-import discord  # noqa: F401
 import asyncio
 from discord.ext import commands
 

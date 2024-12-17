@@ -1,12 +1,12 @@
 import discord
 import json
-import os 
+import os
 from discord.ext import commands
 
 class LevelingCommands(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
-    self.level_roles = {} 
+    self.level_roles = {}
     self.load_xp_data()
 
   def load_xp_data(self):
@@ -21,7 +21,10 @@ class LevelingCommands(commands.Cog):
       json.dump(self.xp_data, f, indent=4)
 
   def calculate_level(self, xp):
-    return int(xp ** 0.5) 
+    level = 0
+    while xp >= (level + 1) ** 2 * 10:  # xp for level (level+1) is (level+1)^2 * 10
+      level += 1
+    return level
 
   def get_user_data(self, user_id):
     if str(user_id) not in self.xp_data:
@@ -39,14 +42,16 @@ class LevelingCommands(commands.Cog):
 
   @commands.Cog.listener()
   async def on_message(self, message):
-    if message.author.bot:
+    if message.author.bot or message.content.startswith(self.bot.command_prefix):
       return
 
     user_id = message.author.id
     leveled_up, new_level = self.update_xp(user_id, xp_per_msg=5)
 
     if leveled_up:
-      await message.channel.send(f"🥳 Congratulations {message.author.mention}, you've reached level {new_level}!")
+      await message.channel.send(f"""🥳 Congratulations {message.author.mention}, you've reached level {new_level}!
+                                  -# This leveling system ignores messages that start with the bot's prefix.""")
+      
       await self.assign_role_based_on_level(message.author, new_level)
 
   async def assign_role_based_on_level(self, member, level):
@@ -56,20 +61,20 @@ class LevelingCommands(commands.Cog):
       role = guild.get_role(role_id)
       if role:
         await member.add_roles(role)
-        await member.send(f"✔ You've been assigned the role: {role.name} for reaching level {level}!")
+        await member.send(f"✅ You've been assigned the role: {role.name} for reaching level {level}!")
 
   @commands.command(name="setlevelrole")
   @commands.has_permissions(administrator=True)
   async def set_level_role(self, ctx, level: int, role: discord.Role):
     self.level_roles[level] = role.id
-    await ctx.send(f"ℹ Role {role.name} will now be assigned at level {level}.")
+    await ctx.send(f":information_source: Role {role.name} will now be assigned at level {level}.")
     self.save_level_roles()
 
   def save_level_roles(self):
     with open("level_roles.json", "w") as f:
       json.dump(self.level_roles, f, indent=4)
 
-  @commands.command(name="level")
+  @commands.command(name="rank")
   async def check_level(self, ctx, member: discord.Member = None):
     if member is None:
       member = ctx.author
@@ -79,6 +84,8 @@ class LevelingCommands(commands.Cog):
     xp = user_data["xp"]
     await ctx.send(f"{member.mention} is at level {level} with {xp} XP.")
 
+# todo: stop procrastinating, finish exams then implement rankcard system smh
+
 ################ FOR INIT ###############
-async def setup(bot):                     
+async def setup(bot):
   await bot.add_cog(LevelingCommands(bot))

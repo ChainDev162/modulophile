@@ -1,4 +1,3 @@
-import discord  # noqa: F401
 import json
 import os 
 from discord.ext import commands

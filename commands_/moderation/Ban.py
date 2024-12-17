@@ -1,5 +1,4 @@
 import discord
-import json  # noqa: F401
 from discord.ext import commands
 
 class BanCommands(commands.Cog):
@@ -11,7 +10,7 @@ class BanCommands(commands.Cog):
   @commands.cooldown(1, 3, commands.BucketType.user)
   async def ban(self, ctx, member: discord.Member, *, reason=None):
     await member.ban(reason=reason)
-    await ctx.send(f"{member.mention} has been banned for {reason}.")
+    await ctx.send(f":hammer:{member.mention} has been banned for {reason}.")
 
   @commands.command(name="unban")
   @commands.has_permissions(ban_members=True)
@@ -20,6 +19,7 @@ class BanCommands(commands.Cog):
     user = await self.bot.fetch_user(user_id)
     await ctx.guild.unban(user)
     await ctx.send(f"{user.mention} has been unbanned.")
+    
 ################ FOR INIT ###############
 async def setup(bot):
   await bot.add_cog(BanCommands(bot))
