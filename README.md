@@ -7,7 +7,6 @@ A Discord moderation bot built using `discord.py` with features to assist in man
 1. **Clone the Repository**
    ```bash
    git clone https://github.com/ChainDev162/moderationbot.git
-   cd moderationbot
    ```
 
 2. **Install Required Dependencies**
