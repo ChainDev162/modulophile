@@ -31,7 +31,7 @@ def save_warnings(warnings):
 
 warnings = load_warnings()
 
-
+# thanks so much to pydis for helping me with this
 async def load_cogs():
   loaded_exts = []
   ext_dir = "commands_"
