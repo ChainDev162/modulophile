@@ -2,6 +2,7 @@ import discord
 import os
 import json
 from discord.ext import commands
+from ..utils.messages import MessageUtils
 
 class WarnCommands(commands.Cog):
   def __init__(self, bot):
@@ -30,7 +31,7 @@ class WarnCommands(commands.Cog):
       self.warn_counts[user_id].append(reason or "No reason provided.")
       self.save_warnings()
       await member.send(f"You have been warned in {ctx.guild.name} for: {reason or 'No reason provided.'}")
-      await ctx.send(f"{member.mention} has been warned for: {reason or 'No reason provided.'}")
+      await MessageUtils.sendtemp(f"{member.mention} has been warned for: {reason or 'No reason provided.'}", ctx=ctx)
 
   @commands.command(name="wcs")
   @commands.cooldown(1, 3, commands.BucketType.user)  
@@ -44,7 +45,6 @@ class WarnCommands(commands.Cog):
       for i, warning in enumerate(self.warn_counts[user_id], start=1):
         embed.add_field(name=f"Warning {i}", value=warning, inline=False)
         await ctx.author.send(embed=embed)
-        await ctx.send(f"{ctx.author.mention}, your requested warnings have been sent to you.")
     else:
       await ctx.send(f"No warnings found for {member.mention}.")
 

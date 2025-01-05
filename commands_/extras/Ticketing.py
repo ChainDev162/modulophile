@@ -15,9 +15,8 @@ class TicketCommands(commands.Cog):
       color=discord.Color.green()
     )
     button = Button(label="Create Ticket", style=discord.ButtonStyle.primary, custom_id="create_ticket")
-    view = View()
-    view.add_item(button)
-    await ctx.send(embed=embed, view=view)
+    View().add_item(button)
+    await ctx.send(embed=embed, view=View())
 
   @commands.Cog.listener()
   async def on_interaction(self, interaction: discord.Interaction):

@@ -1,90 +1,46 @@
-import discord
-import json
+#_ignore_
+# thanks to Defxult/discordLevelingSystem for this system, really helped a lot
+from discordLevelingSystem import DiscordLevelingSystem, LevelUpAnnouncement, RoleAward
+import dotenv
 import os
+from main import bot 
 from discord.ext import commands
+import pathlib
+
+dotenv.load_dotenv()
+
+LVLDB_PATH = os.getenv("LVDB_PATH")
+TESTING_GUILD = os.getenv("TESTING_GUILD")
+MAIN_GUILD = os.getenv("MAIN_GUILD")
+LEVELDB_NAME = os.getenv("LEVELDB_NAME")
 
 class LevelingCommands(commands.Cog):
-  def __init__(self, bot):
-    self.bot = bot
-    self.level_roles = {}
-    self.load_xp_data()
+  global lvl
+  lvl = DiscordLevelingSystem(stack_awards=False, bot=bot)
+  
+  if pathlib.Path('../../data/').exists():
+    pass 
+  else:
+    pathlib.Path("../../data/").mkdir(exist_ok=True)
+    
+  if pathlib.Path(f"../../data/{LEVELDB_NAME}.db").exists():
+    lvl.connect_to_database_file(LVLDB_PATH)
+  else:
+    lvl.create_database_file(LVLDB_PATH, LEVELDB_NAME)
 
-  def load_xp_data(self):
-    if os.path.exists("xp_data.json"):
-      with open("xp_data.json", "r") as f:
-        self.xp_data = json.load(f)
-    else:
-      self.xp_data = {}
+  my_awards = {
+    MAIN_GUILD: [
+      RoleAward(role_id=831672678586777601, level_requirement=1, role_name='Rookie'),
+      RoleAward(role_id=831672730583171073, level_requirement=2, role_name='Associate'),
+      RoleAward(role_id=831672814419050526, level_requirement=3, role_name='Legend')
+    ]
+  }
+  
+  @bot.event
+  async def on_message(message):
+    await lvl.award_xp(amount=15, message=message)
 
-  def save_xp_data(self):
-    with open("xp_data.json", "w") as f:
-      json.dump(self.xp_data, f, indent=4)
-
-  def calculate_level(self, xp):
-    level = 0
-    while xp >= (level + 1) ** 2 * 10:  # xp for level (level+1) is (level+1)^2 * 10
-      level += 1
-    return level
-
-  def get_user_data(self, user_id):
-    if str(user_id) not in self.xp_data:
-      self.xp_data[str(user_id)] = {"xp": 0, "level": 0}
-    return self.xp_data[str(user_id)]
-
-  def update_xp(self, user_id, xp_per_msg):
-    user_data = self.get_user_data(user_id)
-    user_data["xp"] += xp_per_msg
-    new_level = self.calculate_level(user_data["xp"])
-    leveled_up = new_level > user_data["level"]
-    user_data["level"] = new_level
-    self.save_xp_data()
-    return leveled_up, new_level
-
-  @commands.Cog.listener()
-  async def on_message(self, message):
-    if message.author.bot or message.content.startswith(self.bot.command_prefix):
-      return
-
-    user_id = message.author.id
-    leveled_up, new_level = self.update_xp(user_id, xp_per_msg=5)
-
-    if leveled_up:
-      await message.channel.send(f"""🥳 Congratulations {message.author.mention}, you've reached level {new_level}!
-                                  -# This leveling system ignores messages that start with the bot's prefix.""")
-      
-      await self.assign_role_based_on_level(message.author, new_level)
-
-  async def assign_role_based_on_level(self, member, level):
-    guild = member.guild
-    if level in self.level_roles:
-      role_id = self.level_roles[level]
-      role = guild.get_role(role_id)
-      if role:
-        await member.add_roles(role)
-        await member.send(f"✅ You've been assigned the role: {role.name} for reaching level {level}!")
-
-  @commands.command(name="setlevelrole")
-  @commands.has_permissions(administrator=True)
-  async def set_level_role(self, ctx, level: int, role: discord.Role):
-    self.level_roles[level] = role.id
-    await ctx.send(f":information_source: Role {role.name} will now be assigned at level {level}.")
-    self.save_level_roles()
-
-  def save_level_roles(self):
-    with open("level_roles.json", "w") as f:
-      json.dump(self.level_roles, f, indent=4)
-
-  @commands.command(name="rank")
-  async def check_level(self, ctx, member: discord.Member = None):
-    if member is None:
-      member = ctx.author
-
-    user_data = self.get_user_data(member.id)
-    level = user_data["level"]
-    xp = user_data["xp"]
-    await ctx.send(f"{member.mention} is at level {level} with {xp} XP.")
-
-# todo: stop procrastinating, finish exams then implement rankcard system smh
+  announcement = LevelUpAnnouncement(f'{LevelUpAnnouncement.Member.mention} just leveled up to level {LevelUpAnnouncement.LEVEL} 😎')
 
 ################ FOR INIT ###############
 async def setup(bot):
