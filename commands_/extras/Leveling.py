@@ -10,7 +10,6 @@ import pathlib
 dotenv.load_dotenv()
 
 LVLDB_PATH = os.getenv("LVDB_PATH")
-TESTING_GUILD = os.getenv("TESTING_GUILD")
 MAIN_GUILD = os.getenv("MAIN_GUILD")
 LEVELDB_NAME = os.getenv("LEVELDB_NAME")
 
@@ -34,6 +33,7 @@ class LevelingCommands(commands.Cog):
       RoleAward(role_id=831672730583171073, level_requirement=2, role_name='Associate'),
       RoleAward(role_id=831672814419050526, level_requirement=3, role_name='Legend')
     ]
+    # add other guilds here with the same format or expand this one
   }
   
   @bot.event

@@ -6,18 +6,51 @@ import sys
 import dotenv
 import pathlib
 from discord.ext import commands
+from commands_.utils.messages import MessageUtils
+import inquirer
 
 intents = discord.Intents.default()
 intents.message_content = True  
 intents.guilds = True
 
-bot = commands.Bot(command_prefix="_", intents=intents)
+BASE_DIR = os.path.dirname(os.path.abspath(__name__))
+os.chdir(BASE_DIR)
 
-OWNER_ID = 1170123796783583375
+_env = dotenv.load_dotenv()
 
-dotenv.load_dotenv()
+if not _env:
+  print("Must be your first time running this, eh? Let's get you set up!")
+  questions = [
+    inquirer.Text("TOKEN", message="Enter your bot's token", 
+                  validate=lambda _, x: len(x) > 0 or "Token cannot be empty!"),
+    
+    inquirer.Text("PREFIX", message="Enter your bot's prefix"),
+    
+    inquirer.Text("OWNER_ID", message="Enter your Discord ID", 
+                  validate=lambda _, x: len(x) == 18 and x.isdigit() or "ID is not valid!"),
+    
+    inquirer.Text("TESTING_GUILD", message="Enter the ID of the guild you want to test this bot in (optonal, but recommended)",
+                  validate=lambda _, x: len(x) == 18 and x.isdigit() or "ID is not valid!"),
+    
+    inquirer.Text("MAIN_GUILD", message="Enter the ID of the main guild this bot will be used in (used in Leveling cog)",
+                  validate=lambda _,x: len(x) == 18 and x.isdigit() or "ID is not valid!"),
+  ]
+  answers = inquirer.prompt(questions) 
+  with open('.env', 'w') as fp:
+    for key, value in answers.items():
+      fp.write(f"{key}={value}\nFLAGS=None")
+  dotenv.load_dotenv()
 
-TOKEN = os.getenv('DISCORD_TOKEN')
+FLAGS = os.getenv('FLAGS')
+if 'DEL_PYCACHE' in FLAGS:
+  for pycache_dir in pathlib.Path('.').rglob('__pycache__'):
+    if pycache_dir.is_dir():  
+      import shutil
+      shutil.rmtree(pycache_dir) 
+
+bot = commands.Bot(command_prefix=answers['PREFIX'], intents=intents)
+
+TOKEN = os.getenv('TOKEN')
 
 def load_warnings():
   if os.path.exists('warnings.json'):
@@ -36,74 +69,65 @@ async def load_cogs():
   ext_dir = "commands_"
   
   def get_ignore_reason(file):
-    with open(file, "r", encoding="utf-8") as f:
-      first_line = f.readline().strip()
-    if first_line == "#_ignore_" or file.stem.startswith("_"):
+    if file.stem.startswith("_"):
       return f"⏭ File {file} is marked as ignored, moving on!"
     return None 
-  
+
   all_files = list(pathlib.Path(ext_dir).rglob("*.py"))
-  
+
   for file in all_files:
     ignore_reason = get_ignore_reason(file)
+
     if ignore_reason:
       print(ignore_reason)
       continue
-    
+
     try:
       await bot.load_extension(".".join(file.with_suffix("").parts))
       print(f"✅ Loaded {file}")
       loaded_exts.append(file.stem)
     except commands.ExtensionError as e:
       print(f"❌ Failed to load {file}: {e}")
-  
+
   loaded_commands = ", ".join(loaded_exts)
   loaded_amt = len(loaded_exts) + len(all_files) # just for this next condition
-  
+
   if len(loaded_exts) == len(all_files) and loaded_amt != 0:
     print("🔥 All extensions loaded!")
     print(loaded_exts)
   else:
     print(f"Loaded commands: {loaded_commands}")
 
-tiplist = ["Pro tip: You can mark extensions to be ignored by setting the first line to `#_ignore_` or by appending an underscore to the beginning of the extension's filename!",
-           "Pro tip: You can add your own conditions for the cog loading method!",
-           """Pro tip: You can add your own commands/handlers in this bot! Just create a new file in the existing `commands_` directory and add your code there!
-           Make sure to include the following:
-           ```py
-           async def setup(bot):
-             await bot.add_cog(TicketCommands(bot))``` in your file!"""]
 @bot.event
 async def on_ready():
-  
   print(f'Logged in as {bot.user.name}')
   if not bot.guilds:
     print("Not on any servers.")
   else:
     print("Connected to servers:")
-  for guild in bot.guilds:
-    print(f'- {guild.name} (ID: {guild.id})')
+    for guild in bot.guilds:
+      print(f'- {guild.name} (ID: {guild.id})')
     
 @bot.event
 async def on_command_error(ctx, error):
   if isinstance(error, commands.CommandNotFound):
-    await ctx.send("⁉ This command does not exist.")
+    await MessageUtils.sendtemp(ctx=ctx, content="⁉ This command does not exist.")
   elif isinstance(error, commands.MissingRequiredArgument):
-    await ctx.send("🤔 You are missing an argument for this command.")
+    await MessageUtils.sendtemp(ctx=ctx, content="🤔 You are missing an argument for this command.")
   elif isinstance(error, commands.CommandOnCooldown):
-    await ctx.send(f"⏳ Command is on cooldown. Try again in {int(error.retry_after)} seconds.")
+    await MessageUtils.sendtemp(ctx=ctx, content=f"⏳ Command is on cooldown. Try again in {int(error.retry_after)} seconds.")
   elif isinstance(error, commands.MissingPermissions):
-    await ctx.send("🙅‍♂️ You don't have the necessary permissions to use this command.")
+    await MessageUtils.sendtemp(ctx=ctx, content="🙅‍♂️ You don't have the necessary permissions to use this command.")
   elif isinstance(error, discord.Forbidden):
-    await ctx.send("❌ I don't have permissions for your requested command!")
+    await MessageUtils.sendtemp(ctx=ctx, content="❌ I don't have permissions for your requested command!")
   else:
-    await ctx.send(f"An error occurred while processing the command.`{error}`")
+    await MessageUtils.sendtemp(ctx=ctx, content=f"⚠ An error occurred while processing the command.`{error}`")
     print(f"Error: {error}")
 
 @bot.command(name='reboot')
 @commands.is_owner()
 async def reboot(ctx):
-  await ctx.send("🔄 Rebooting bot...")
+  await MessageUtils.sendtemp(ctx=ctx, content="🔄 Rebooting bot...")
   os.execv(sys.executable, ['python'] + sys.argv)
 
 async def main():  

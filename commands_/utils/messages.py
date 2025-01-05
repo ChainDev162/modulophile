@@ -26,13 +26,15 @@ class MessageUtils(commands.Cog):
       except discord.HTTPException as e:
         print(f"Failed to delete message: {e}")
 
-  async def sendtemp(self, ctx, content, timeout=60):
+  async def sendtemp(self, ctx, content: str, timeout: int = 60):
     if isinstance(content, discord.Embed):
       bot_message = await ctx.send(embed=content)
+    elif isinstance(content, discord.File):
+      bot_message = await ctx.send(file=content)
+    elif isinstance(content, discord.Attachment):
+      bot_message = await ctx.send(file=content)
     else:
       bot_message = await ctx.send(content)
-    
-    bot_message = await ctx.send(content)
     await bot_message.add_reaction(TRASHCAN_EMOJI)
 
     def check_reaction(reaction, user):
