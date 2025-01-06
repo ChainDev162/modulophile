@@ -6,7 +6,6 @@ import sys
 import dotenv
 import pathlib
 from discord.ext import commands
-from commands_.utils.messages import MessageUtils
 import inquirer
 
 intents = discord.Intents.default()
@@ -29,7 +28,7 @@ if not _env:
     inquirer.Text("OWNER_ID", message="Enter your Discord ID", 
                   validate=lambda _, x: len(x) == 18 and x.isdigit() or "ID is not valid!"),
     
-    inquirer.Text("TESTING_GUILD", message="Enter the ID of the guild you want to test this bot in (optonal, but recommended)",
+    inquirer.Text("TESTING_GUILD", message="Enter the ID of the guild you want to test this bot in (optional, but recommended)",
                   validate=lambda _, x: len(x) == 18 and x.isdigit() or "ID is not valid!"),
     
     inquirer.Text("MAIN_GUILD", message="Enter the ID of the main guild this bot will be used in (used in Leveling cog)",
@@ -41,16 +40,18 @@ if not _env:
       fp.write(f"{key}={value}\nFLAGS=None")
   dotenv.load_dotenv()
 
-FLAGS = os.getenv('FLAGS')
+FLAGS = os.getenv('FLAGS') # added new flagging system, add your own flags here!
 if 'DEL_PYCACHE' in FLAGS:
   for pycache_dir in pathlib.Path('.').rglob('__pycache__'):
     if pycache_dir.is_dir():  
       import shutil
       shutil.rmtree(pycache_dir) 
 
-bot = commands.Bot(command_prefix=answers['PREFIX'], intents=intents)
-
 TOKEN = os.getenv('TOKEN')
+PREFIX = os.getenv('PREFIX')
+print("Prefix is ", PREFIX)
+
+bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 
 def load_warnings():
   if os.path.exists('warnings.json'):
@@ -112,28 +113,34 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
   if isinstance(error, commands.CommandNotFound):
-    await MessageUtils.sendtemp(ctx=ctx, content="⁉ This command does not exist.")
+    await ctx.send("⁉ This command does not exist.")
   elif isinstance(error, commands.MissingRequiredArgument):
-    await MessageUtils.sendtemp(ctx=ctx, content="🤔 You are missing an argument for this command.")
+    await ctx.send("🤔 You are missing an argument for this command.")
   elif isinstance(error, commands.CommandOnCooldown):
-    await MessageUtils.sendtemp(ctx=ctx, content=f"⏳ Command is on cooldown. Try again in {int(error.retry_after)} seconds.")
+    await ctx.send(f"⏳ Command is on cooldown. Try again in {int(error.retry_after)} seconds.")
   elif isinstance(error, commands.MissingPermissions):
-    await MessageUtils.sendtemp(ctx=ctx, content="🙅‍♂️ You don't have the necessary permissions to use this command.")
+    await ctx.send("🙅‍♂️ You don't have the necessary permissions to use this command.")
   elif isinstance(error, discord.Forbidden):
-    await MessageUtils.sendtemp(ctx=ctx, content="❌ I don't have permissions for your requested command!")
+    await ctx.send("❌ I don't have permissions for your requested command!")
   else:
-    await MessageUtils.sendtemp(ctx=ctx, content=f"⚠ An error occurred while processing the command.`{error}`")
+    await ctx.send(f"⚠ An error occurred while processing the command.`{error}`")
     print(f"Error: {error}")
 
 @bot.command(name='reboot')
 @commands.is_owner()
 async def reboot(ctx):
-  await MessageUtils.sendtemp(ctx=ctx, content="🔄 Rebooting bot...")
+  await ctx.send("🔄 Rebooting bot...")
   os.execv(sys.executable, ['python'] + sys.argv)
 
 async def main():  
   await load_cogs()
-  await bot.start(TOKEN)
+  try:
+    await bot.start(TOKEN)
+  finally:
+    await bot.close()
 
-asyncio.run(main())
-# somebody make this entire bot use sqlite3 instead of json im too lazy to learn sql
+try:
+  asyncio.run(main())
+except KeyboardInterrupt:
+  print("\nStopping bot...")
+  

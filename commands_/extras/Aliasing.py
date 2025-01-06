@@ -1,6 +1,7 @@
 import json
 import os 
 from discord.ext import commands
+from commands_.utils.messages import MessageUtils
 
 def load_aliases():
   if os.path.exists('aliases.json'):
@@ -17,18 +18,19 @@ aliases = load_aliases()
 class AliasCommands(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
-
+    self.utils = MessageUtils(self.bot)
+    
   @commands.command(name='alias')
   @commands.is_owner()
   async def create_alias(self, ctx, alias_name: str, actual_command: str):
     command = self.bot.get_command(actual_command)
     if command is None:
-      await ctx.send(f"❓ The command `{actual_command}` does not exist.")
+      await self.utils.sendtemp(ctx=ctx, content=f"❓ The command `{actual_command}` does not exist.")
       return
 
     aliases[alias_name] = actual_command
     save_aliases(aliases) 
-    await ctx.send(f"👌 Alias `{alias_name}` created for `{actual_command}`.")
+    await self.utils.sendtemp(ctx=ctx, content=f"👌 Alias `{alias_name}` created for `{actual_command}`.")
 
   @commands.Cog.listener()
   async def on_message(self, message):

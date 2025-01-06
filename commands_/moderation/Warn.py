@@ -9,6 +9,7 @@ class WarnCommands(commands.Cog):
     self.bot = bot
     self.warn_file = 'warnings.json'
     self.load_warnings()
+    self.utils = MessageUtils(self.bot)
 
   def load_warnings(self):
     if os.path.exists(self.warn_file):
@@ -31,7 +32,7 @@ class WarnCommands(commands.Cog):
       self.warn_counts[user_id].append(reason or "No reason provided.")
       self.save_warnings()
       await member.send(f"You have been warned in {ctx.guild.name} for: {reason or 'No reason provided.'}")
-      await MessageUtils.sendtemp(f"{member.mention} has been warned for: {reason or 'No reason provided.'}", ctx=ctx)
+      await self.utils.sendtemp(content=f"{member.mention} has been warned for: {reason or 'No reason provided.'}", ctx=ctx)
 
   @commands.command(name="wcs")
   @commands.cooldown(1, 3, commands.BucketType.user)  
@@ -44,9 +45,9 @@ class WarnCommands(commands.Cog):
         )
       for i, warning in enumerate(self.warn_counts[user_id], start=1):
         embed.add_field(name=f"Warning {i}", value=warning, inline=False)
-        await ctx.author.send(embed=embed)
+        await self.utils.sendtemp(ctx=ctx, content=embed)
     else:
-      await ctx.send(f"No warnings found for {member.mention}.")
+      await self.utils.sendtemp(ctx=ctx, content=f"No warnings found for {member.mention}.")
 
 ################ FOR INIT ###############
 async def setup(bot):

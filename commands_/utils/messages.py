@@ -26,12 +26,10 @@ class MessageUtils(commands.Cog):
       except discord.HTTPException as e:
         print(f"Failed to delete message: {e}")
 
-  async def sendtemp(self, ctx, content: str, timeout: int = 60):
+  async def sendtemp(self, ctx, content: str, timeout: int = 20):
     if isinstance(content, discord.Embed):
       bot_message = await ctx.send(embed=content)
-    elif isinstance(content, discord.File):
-      bot_message = await ctx.send(file=content)
-    elif isinstance(content, discord.Attachment):
+    elif isinstance(content, discord.Attachment or discord.File):
       bot_message = await ctx.send(file=content)
     else:
       bot_message = await ctx.send(content)
@@ -53,6 +51,3 @@ class MessageUtils(commands.Cog):
       print(f"Failed to delete message: {e}")
     except asyncio.TimeoutError:
       await bot_message.delete()
-
-async def setup(bot):
-  await bot.add_cog(MessageUtils(bot))

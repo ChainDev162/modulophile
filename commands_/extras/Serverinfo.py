@@ -5,7 +5,7 @@ from commands_.utils.messages import MessageUtils
 class ServerInfoCommands(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
-
+    self.utils = MessageUtils(self.bot)
   @commands.command(name="serverinfo")
   @commands.cooldown(1, 3, commands.BucketType.user)
   async def server_info(self, ctx):
@@ -13,7 +13,7 @@ class ServerInfoCommands(commands.Cog):
     embed.add_field(name="Server ID", value=ctx.guild.id, inline=True)
     embed.add_field(name="Owner", value=ctx.guild.owner, inline=True)
     embed.add_field(name="Members", value=ctx.guild.member_count, inline=True)
-    await MessageUtils.sendtemp(ctx=ctx, content=embed)
+    await self.utils.sendtemp(ctx=ctx, content=embed)
 ################ FOR INIT ###############
 async def setup(bot):
   await bot.add_cog(ServerInfoCommands(bot))

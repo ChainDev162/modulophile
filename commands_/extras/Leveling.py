@@ -1,5 +1,5 @@
-#_ignore_
 # thanks to Defxult/discordLevelingSystem for this system, really helped a lot
+# btw this wasnt tested yet, so if you have any issues, please let me know
 from discordLevelingSystem import DiscordLevelingSystem, LevelUpAnnouncement, RoleAward
 import dotenv
 import os
